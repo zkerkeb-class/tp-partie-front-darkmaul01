@@ -1,14 +1,8 @@
 import './index.css';
 
-const Title = ({label = 'Met un titre'}) => {
-    console.log(label)
-    return (
-        <div>
-            <h1 className="title">{label}</h1>
-            <h2>Ceci est un sous-titre</h2>
-        </div>
-    );
-}
+const Title = ({ level = 1, label }) => {
+    const Tag = `h${level}`;
+    return <Tag className={`titleh${level}`}>{label}</Tag>;
+};
 
-
-export default Title; 
+export default Title;
