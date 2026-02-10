@@ -8,6 +8,12 @@ import PokeDetails from "./pages/PokeDetails";
 import { fetchPokemons } from "./config/api";
 
 function App() {
+  const typeOptions = [
+    'Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison',
+    'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark',
+    'Steel', 'Fairy'
+  ];
+
   const [route, setRoute] = useState(window.location.hash || '#/');
   const [currentPage, setCurrentPage] = useState(1);
   const [allPokemons, setAllPokemons] = useState([]);
@@ -18,10 +24,18 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [sortBy, setSortBy] = useState('id-asc');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const storedTheme = window.localStorage.getItem('theme');
+    if (storedTheme) {
+      return storedTheme === 'dark';
+    }
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   const POKEMONS_PER_PAGE = 20;
   
@@ -29,6 +43,7 @@ function App() {
     setSearchTerm("");
     setSearchResults([]);
     setIsSearching(false);
+    setSelectedTypeFilter('');
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -44,10 +59,17 @@ function App() {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
-  const sortPokemons = (pokemonList) => {
+  const sortPokemons = (pokemonList, sortKey = sortBy) => {
     const sorted = [...pokemonList];
+
+    const getStat = (pokemon, key) => {
+      const base = pokemon?.base || {};
+      const raw = base[key] ?? base[key.toLowerCase()] ?? 0;
+      const value = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+      return Number.isFinite(value) ? value : 0;
+    };
     
-    switch (sortBy) {
+    switch (sortKey) {
       case 'id-asc':
         return sorted.sort((a, b) => (a.id || 0) - (b.id || 0));
       case 'name-asc':
@@ -63,11 +85,11 @@ function App() {
           return nameB.localeCompare(nameA);
         });
       case 'hp-desc':
-        return sorted.sort((a, b) => (b.base?.HP || 0) - (a.base?.HP || 0));
+        return sorted.sort((a, b) => getStat(b, 'HP') - getStat(a, 'HP'));
       case 'attack-desc':
-        return sorted.sort((a, b) => (b.base?.Attack || 0) - (a.base?.Attack || 0));
+        return sorted.sort((a, b) => getStat(b, 'Attack') - getStat(a, 'Attack'));
       case 'defense-desc':
-        return sorted.sort((a, b) => (b.base?.Defense || 0) - (a.base?.Defense || 0));
+        return sorted.sort((a, b) => getStat(b, 'Defense') - getStat(a, 'Defense'));
       default:
         return sorted;
     }
@@ -88,6 +110,12 @@ function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const theme = isDarkMode ? 'dark' : 'light';
+    document.body.dataset.theme = theme;
+    window.localStorage.setItem('theme', theme);
+  }, [isDarkMode]);
 
   const scrollToTop = () => {
     const duration = 400;
@@ -147,26 +175,55 @@ function App() {
     setCurrentPage((prev) => (prev <= 1 ? 1 : prev - 1));
 
   const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
+    const term = e.target.value;
     setSearchTerm(term);
     setCurrentPage(1);
+    applyFilters(term, selectedTypeFilter);
+  };
 
-    if (term.trim() === "") {
-      setSearchResults([]);
-      setIsSearching(false);
-    } else {
-      setIsSearching(true);
-      const filtered = allPokemons.filter((pokemon) => {
+  const handleTypeFilter = (e) => {
+    const value = e.target.value;
+    setSelectedTypeFilter(value);
+    setCurrentPage(1);
+    applyFilters(searchTerm, value);
+  };
+
+  const applyFilters = (termValue, typeValue, sortOverride) => {
+    const term = termValue.trim().toLowerCase();
+    const typeFilter = typeValue.trim().toLowerCase();
+    let filtered = [...allPokemons];
+
+    if (term) {
+      filtered = filtered.filter((pokemon) => {
         const str = JSON.stringify(pokemon).toLowerCase();
         return str.includes(term);
       });
-      setSearchResults(sortPokemons(filtered));
     }
+
+    if (typeFilter) {
+      filtered = filtered.filter((pokemon) => {
+        const types = Array.isArray(pokemon.type) ? pokemon.type : [pokemon.type];
+        return types.some((t) => (t || '').toLowerCase() === typeFilter);
+      });
+    }
+
+    if (!term && !typeFilter) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults(sortPokemons(filtered, sortOverride));
   };
 
   const handleSortChange = (e) => {
-    setSortBy(e.target.value);
+    const value = e.target.value;
+    setSortBy(value);
     setCurrentPage(1);
+    if (isSearching) {
+      applyFilters(searchTerm, selectedTypeFilter, value);
+    }
   };
 
   const getResultsCount = () => {
@@ -193,33 +250,71 @@ function App() {
       <div className="app">
         {/* En-tête */}
         <header className="app-header">
-          <Title level={1} label="Carte Pokémon" />
-          <Title level={2} label="Explorateur" />
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Rechercher un Pokémon (nom, type, numéro)..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="search-input"
-              aria-label="Rechercher un Pokemon"
-            />
+          <div className="header-top">
+            <div className="header-title">
+              <Title level={1} label="Carte Pokémon" />
+              <Title level={2} label="Explorateur" />
+            </div>
+            <div className="header-actions">
+              <button
+                type="button"
+                className="add-button"
+                onClick={() => window.location.hash = "#/add"}
+              >
+                Ajouter une carte
+              </button>
+              <button
+                type="button"
+                className="theme-button"
+                onClick={() => setIsDarkMode((prev) => !prev)}
+              >
+                {isDarkMode ? 'Mode clair' : 'Mode sombre'}
+              </button>
+            </div>
           </div>
-          <div className="sort-bar">
-            <label htmlFor="sort-select" className="sort-label">Trier par :</label>
-            <select 
-              id="sort-select"
-              value={sortBy} 
-              onChange={handleSortChange}
-              className="sort-select"
-            >
-              <option value="id-asc">Numéro (ID)</option>
-              <option value="name-asc">Nom (A-Z)</option>
-              <option value="name-desc">Nom (Z-A)</option>
-              <option value="hp-desc">HP (Plus élevé)</option>
-              <option value="attack-desc">Attaque (Plus élevé)</option>
-              <option value="defense-desc">Défense (Plus élevé)</option>
-            </select>
+          <div className="header-controls">
+            <div className="control-block search-bar">
+              <label htmlFor="search-input" className="search-label">Rechercher</label>
+              <input
+                id="search-input"
+                type="text"
+                placeholder="Rechercher un Pokémon (nom, type, numéro)..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="search-input"
+                aria-label="Rechercher un Pokemon"
+              />
+            </div>
+            <div className="control-block filter-bar">
+              <label htmlFor="type-filter" className="filter-label">Filtrer par type :</label>
+              <select
+                id="type-filter"
+                value={selectedTypeFilter}
+                onChange={handleTypeFilter}
+                className="filter-select"
+              >
+                <option value="">Tous les types</option>
+                {typeOptions.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="control-block sort-bar">
+              <label htmlFor="sort-select" className="sort-label">Trier par :</label>
+              <select 
+                id="sort-select"
+                value={sortBy} 
+                onChange={handleSortChange}
+                className="sort-select"
+              >
+                <option value="id-asc">Numéro (ID)</option>
+                <option value="name-asc">Nom (A-Z)</option>
+                <option value="name-desc">Nom (Z-A)</option>
+                <option value="hp-desc">HP (Plus élevé)</option>
+                <option value="attack-desc">Attaque (Plus élevé)</option>
+                <option value="defense-desc">Défense (Plus élevé)</option>
+              </select>
+            </div>
           </div>
         </header>
 
@@ -290,13 +385,6 @@ function App() {
               })}
             </div>
           )}
-
-          <button 
-            onClick={() => window.location.hash = "#/add"}
-            style={{ marginTop: "16px" }}
-          >
-            Ajouter
-          </button>
 
           {error && <div className="error">{error}</div>}
         </footer>

@@ -19,26 +19,23 @@
 .details-header {
     padding: 24px;
     color: white;
+    background: linear-gradient(
+        120deg,
+        var(--type-c1),
+        var(--type-c2),
+        var(--type-c3),
+        var(--type-c4),
+        var(--type-c1)
+    );
+    background-size: 200% 200%;
+    animation: headerFlow 10s ease-in-out infinite;
 }
 
-.details-header.type-normal { background: linear-gradient(135deg, #A8A878, #6D6D4E); }
-.details-header.type-fire { background: linear-gradient(135deg, #F08030, #9C531F); }
-.details-header.type-water { background: linear-gradient(135deg, #6890F0, #445E9C); }
-.details-header.type-electric { background: linear-gradient(135deg, #F8D030, #A1871F); }
-.details-header.type-grass { background: linear-gradient(135deg, #78C850, #4E8234); }
-.details-header.type-ice { background: linear-gradient(135deg, #98D8D8, #638D8D); }
-.details-header.type-fighting { background: linear-gradient(135deg, #C03028, #7D1F1A); }
-.details-header.type-poison { background: linear-gradient(135deg, #A040A0, #682A68); }
-.details-header.type-ground { background: linear-gradient(135deg, #E0C068, #927D44); }
-.details-header.type-flying { background: linear-gradient(135deg, #A890F0, #6D5E9C); }
-.details-header.type-psychic { background: linear-gradient(135deg, #F85888, #A13959); }
-.details-header.type-bug { background: linear-gradient(135deg, #A8B820, #6D7815); }
-.details-header.type-rock { background: linear-gradient(135deg, #B8A038, #786824); }
-.details-header.type-ghost { background: linear-gradient(135deg, #705898, #493963); }
-.details-header.type-dragon { background: linear-gradient(135deg, #7038F8, #4924A1); }
-.details-header.type-dark { background: linear-gradient(135deg, #705848, #49392F); }
-.details-header.type-steel { background: linear-gradient(135deg, #B8B8D0, #787887); }
-.details-header.type-fairy { background: linear-gradient(135deg, #EE99AC, #B65D7C); }
+@keyframes headerFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
 .back-button {
     padding: 10px 20px;
@@ -108,6 +105,68 @@
     color: #2C3E50;
     margin-bottom: 16px;
     font-size: 20px;
+}
+
+.radar-wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    background: #f8f9fb;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #eef0f4;
+}
+
+.radar-chart {
+    width: 240px;
+    height: 240px;
+    margin: 0 auto;
+}
+
+.radar-grid {
+    fill: none;
+    stroke: #d9dee7;
+    stroke-width: 1;
+}
+
+.radar-area {
+    fill: rgba(120, 200, 80, 0.25);
+    stroke: #78C850;
+    stroke-width: 2;
+}
+
+.radar-label {
+    font-size: 9px;
+    fill: #2C3E50;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.radar-legend {
+    display: grid;
+    gap: 8px;
+}
+
+.radar-legend-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+    color: #2C3E50;
+    background: #fff;
+    border: 1px solid #e6e8ee;
+    border-radius: 10px;
+    padding: 8px 12px;
+}
+
+.radar-legend-name {
+    font-weight: 600;
+}
+
+.radar-legend-value {
+    font-weight: 700;
 }
 
 .error-message {
@@ -220,7 +279,14 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3B4CCA 0%, #FFDE00 100%);
+    background: linear-gradient(
+        120deg,
+        var(--type-c1, #3B4CCA),
+        var(--type-c2, #FFDE00),
+        var(--type-c3, #3B4CCA)
+    );
+    background-size: 200% 200%;
+    animation: headerFlow 10s ease-in-out infinite;
     color: #2C3E50;
     flex: 1;
     font-weight: 700;

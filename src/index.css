@@ -28,15 +28,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a 0%, #dc2626 25%, #1e3a8a 50%, #dc2626 75%, #1e3a8a 100%);
-  background-size: 400% 400%;
-  animation: pokemonGradient 15s ease infinite;
+  background: #f3f4f6;
+  color: #111827;
 }
 
-@keyframes pokemonGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+body[data-theme="dark"] {
+  background: #0b1020;
+  color: #e2e8f0;
 }
 
 h1 {

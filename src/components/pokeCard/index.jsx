@@ -44,7 +44,7 @@ const PokedexCard = ({ pokemon }) => {
     window.location.hash = `#/pokemon/${encodeURIComponent(targetName)}`;
   };
 
-  // Tilt dynamique
+  // Tilt dynamique (leger pour eviter les debordements)
   const handleMouseMove = (e) => {
     const card = cardRef.current;
     if (!card) return;
@@ -56,10 +56,10 @@ const PokedexCard = ({ pokemon }) => {
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotateY = ((x - centerX) / centerX) * 12;
-    const rotateX = -((y - centerY) / centerY) * 6;
+    const rotateY = ((x - centerX) / centerX) * 4;
+    const rotateX = -((y - centerY) / centerY) * 2;
 
-    card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg) translateY(-2px)`;
+    card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(0.98)`;
   };
 
   const handleMouseEnter = () => {
@@ -100,14 +100,15 @@ const PokedexCard = ({ pokemon }) => {
       
       setModalPosition({ top: `${top}px`, left: `${left}px` });
       setShowPreview(true);
-    }, 800);
+    }, 1500);
   };
 
   const handleMouseLeave = () => {
     const card = cardRef.current;
-    if (!card) return;
-    card.style.transform = "";
-    
+    if (card) {
+      card.style.transform = "";
+    }
+
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current);
     }
@@ -173,7 +174,7 @@ const PokedexCard = ({ pokemon }) => {
             <div className="pk-stat-bar">
               <div 
                 className="pk-stat-fill defense" 
-                style={{ width: `${Math.min((pokeState.base?.Defense || 0) / 1.5, 100)}%` }}
+                style={{ width: `${Math.min((pokeState.base?.Defense || 0) / 200, 1) * 100}%` }}
               />
             </div>
           </div>

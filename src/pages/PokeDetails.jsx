@@ -88,6 +88,30 @@ export default function PokeDetails({ name, onRefresh, onNotify }) {
 
     const toInt = (v) => (v === '' || v === null || v === undefined ? 0 : parseInt(v, 10));
 
+    const stats = [
+        { label: 'HP', value: toInt(form.hp), max: 255 },
+        { label: 'Attack', value: toInt(form.attack), max: 200 },
+        { label: 'Defense', value: toInt(form.defense), max: 200 },
+        { label: 'Sp. Atk', value: toInt(form.spAtk), max: 200 },
+        { label: 'Sp. Def', value: toInt(form.spDef), max: 200 },
+        { label: 'Speed', value: toInt(form.speed), max: 200 }
+    ];
+
+    const buildRadarPoints = (radius, clamp = true) => {
+        const cx = 100;
+        const cy = 100;
+        return stats
+            .map((stat, i) => {
+                const angle = (Math.PI * 2 * i) / stats.length - Math.PI / 2;
+                const value = clamp ? Math.min(stat.value, stat.max) : stat.max;
+                const r = (value / stat.max) * radius;
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                return `${x},${y}`;
+            })
+            .join(' ');
+    };
+
     const onSave = async () => {
         const validationErrors = validateForm();
         if (validationErrors.length > 0) {
@@ -148,13 +172,47 @@ export default function PokeDetails({ name, onRefresh, onNotify }) {
         }
     };
 
-    const type = (Array.isArray(poke.type) ? poke.type[0] : poke.type || "normal").toLowerCase();
+    const typeColors = {
+        normal: ['#A8A878', '#6D6D4E'],
+        fire: ['#F08030', '#9C531F'],
+        water: ['#6890F0', '#445E9C'],
+        electric: ['#F8D030', '#A1871F'],
+        grass: ['#78C850', '#4E8234'],
+        ice: ['#98D8D8', '#638D8D'],
+        fighting: ['#C03028', '#7D1F1A'],
+        poison: ['#A040A0', '#682A68'],
+        ground: ['#E0C068', '#927D44'],
+        flying: ['#A890F0', '#6D5E9C'],
+        psychic: ['#F85888', '#A13959'],
+        bug: ['#A8B820', '#6D7815'],
+        rock: ['#B8A038', '#786824'],
+        ghost: ['#705898', '#493963'],
+        dragon: ['#7038F8', '#4924A1'],
+        dark: ['#705848', '#49392F'],
+        steel: ['#B8B8D0', '#787887'],
+        fairy: ['#EE99AC', '#B65D7C']
+    };
+    const typeList = Array.isArray(poke.type)
+        ? poke.type
+        : (poke.type ? [poke.type] : ['normal']);
+    const primaryType = (typeList[0] || 'normal').toLowerCase();
+    const secondaryType = (typeList[1] || typeList[0] || 'normal').toLowerCase();
+    const primaryColors = typeColors[primaryType] || typeColors.normal;
+    const secondaryColors = typeColors[secondaryType] || typeColors.normal;
 
     return (
         <div className="details-container">
-            <div className="details-card">
+            <div
+                className="details-card"
+                style={{
+                    '--type-c1': primaryColors[0],
+                    '--type-c2': primaryColors[1],
+                    '--type-c3': secondaryColors[0],
+                    '--type-c4': secondaryColors[1]
+                }}
+            >
                 {/* Header */}
-                <div className={`details-header type-${type}`}>
+                <div className="details-header">
                     <button onClick={() => window.location.hash = '#/'} className="back-button">
                         ← Retour
                     </button>
@@ -316,6 +374,49 @@ export default function PokeDetails({ name, onRefresh, onNotify }) {
                                     disabled={!isEditing} 
                                     className="field-input" 
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="section">
+                        <h3 className="section-title">📊 Graphique des statistiques</h3>
+                        <div className="radar-wrap">
+                            <svg viewBox="0 0 200 200" className="radar-chart" aria-label="Graphique radar des statistiques">
+                                <polygon
+                                    className="radar-grid"
+                                    points={buildRadarPoints(80, false)}
+                                />
+                                <polygon
+                                    className="radar-grid"
+                                    points={buildRadarPoints(55, false)}
+                                />
+                                <polygon
+                                    className="radar-grid"
+                                    points={buildRadarPoints(30, false)}
+                                />
+                                <polygon
+                                    className="radar-area"
+                                    points={buildRadarPoints(80, true)}
+                                />
+                                {stats.map((stat, i) => {
+                                    const angle = (Math.PI * 2 * i) / stats.length - Math.PI / 2;
+                                    const labelRadius = 96;
+                                    const x = 100 + Math.cos(angle) * labelRadius;
+                                    const y = 100 + Math.sin(angle) * labelRadius;
+                                    return (
+                                        <text key={stat.label} x={x} y={y} className="radar-label">
+                                            {stat.label}
+                                        </text>
+                                    );
+                                })}
+                            </svg>
+                            <div className="radar-legend">
+                                {stats.map((stat) => (
+                                    <div key={stat.label} className="radar-legend-item">
+                                        <span className="radar-legend-name">{stat.label}</span>
+                                        <span className="radar-legend-value">{stat.value}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
